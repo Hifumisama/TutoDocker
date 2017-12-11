@@ -1,0 +1,49 @@
+version: "3"
+services:
+  web:
+    # replace username/repo:tag with your name and image details
+    image: hifumisama/tutorial:partie2
+    # ici on donne les consignes de déploiement des conteneurs
+    deploy:
+      # on définit combien de fois on duplique notre conteneur
+      replicas: 5
+      # On indique ici la gestion des ressources pour chacun des conteneurs
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 50M
+      # ici on indique si les conteneurs doivent être redémarés et sous quelle condition
+      restart_policy:
+        condition: on-failure
+    # on associe le port docker avec le port de l'hote, donc ici notre machine :) NOTE ! Dans l'ordre, on a le "port machine":"portDockerContainer"
+    ports:
+      - "4000:3000"
+    networks:
+      - webnet
+  visualizer:
+    image: dockersamples/visualizer:stable
+    ports:
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+      # ici c'est une contrainte intéressante, car elle permet de lancer le service uniquement depuis le manager
+        constraints: [node.role == manager]
+    networks:
+      - webnet
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - /home/docker/data:/data
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    command: redis-server --appendonly yes
+    networks:
+      - webnet
+networks:
+  webnet:
+
